@@ -71,12 +71,10 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 
 		if (isset($config['resource'])) {
 			$this->connection = $config['resource'];
+		} elseif (empty($config['persistent'])) {
+			$this->connection = @oci_new_connect($config['username'], $config['password'], $config['database'], $config['charset']); // intentionally @
 		} else {
-			if (isset($config['persistent']) && $config['persistent']) {
-				$this->connection = @oci_pconnect($config['username'], $config['password'], $config['database'], $config['charset']); // intentionally @
-			} else {
-				$this->connection = @oci_new_connect($config['username'], $config['password'], $config['database'], $config['charset']); // intentionally @
-			}
+			$this->connection = @oci_pconnect($config['username'], $config['password'], $config['database'], $config['charset']); // intentionally @
 		}
 
 		if (!$this->connection) {
