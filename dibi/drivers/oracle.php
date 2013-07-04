@@ -30,14 +30,12 @@
  *     dibi::query("select myfunction(%s, %i) as result from dual", 'test', 12);
  *     -- or
  *     dibi::query("select myfunction(%sql, %sql) as r from dual", dibi::getDriver()->bindData('asdfasdf', SQLT_CHR), dibi::getDriver()->bindData(21, OCI_B_INT));
- *     dibi::getConnection()->free(); // required before issuing another query
  *     </code>
  *   - procedures
  *     <code>
  *     $out = dibi::getDriver()->bindData(0, OCI_B_INT);
  *     dibi::query("call myprocedure(%sql, %sql)",  dibi::getDriver()->bindData('asdfasdf', SQLT_CHR), $out);
  *     dibi::getDriver()->getBoundData($out);
- *     dibi::getConnection()->free(); // required before issuing another query
  *     </code>
  *   - LOBs
  *     <code>
@@ -49,7 +47,6 @@
  *     ))
  *     ->returning('%n, %n INTO %sql, %sql', 'BLOB1', 'CLOB1', $key, $key2)
  *     ->execute();
- *     dibi::getConnection()->free(); // required before issuing another query
  *     </code>
  *
  * @author     David Grudl
@@ -198,6 +195,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 						$obj['descriptor']->free();
 					}
 				}
+				$this->binds = array(); // frees bound data and enables other queries flawlessly
 			}
 
 			if ($err) {
