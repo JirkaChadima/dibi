@@ -18,6 +18,7 @@
  *   - username (or user)
  *   - password (or pass)
  *   - charset => character encoding to set
+ *   - schema => alters session schema
  *   - formatDate => how to format date in SQL (@see date)
  *   - formatDateTime => how to format datetime in SQL (@see date)
  *   - resource (resource) => existing connection resource
