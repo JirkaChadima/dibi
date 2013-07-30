@@ -130,6 +130,10 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 			$err = oci_error();
 			throw new DibiDriverException($err['message'], $err['code']);
 		}
+		
+		if (isset($config['schema'])) {
+			$this->query('ALTER SESSION SET CURRENT_SCHEMA=' . $config['schema']);
+		}
 	}
 
 
