@@ -20,7 +20,6 @@ if (version_compare(PHP_VERSION, '5.2.0', '<')) {
 @set_magic_quotes_runtime(FALSE); // intentionally @
 
 
-
 require_once dirname(__FILE__) . '/libs/interfaces.php';
 require_once dirname(__FILE__) . '/libs/DibiDateTime.php';
 require_once dirname(__FILE__) . '/libs/DibiObject.php';
@@ -41,9 +40,6 @@ require_once dirname(__FILE__) . '/libs/DibiFirePhpLogger.php';
 if (interface_exists('Nette\Diagnostics\IBarPanel') || interface_exists('IBarPanel')) {
 	require_once dirname(__FILE__) . '/bridges/Nette/DibiNettePanel.php';
 }
-
-
-
 
 
 /**
@@ -82,7 +78,7 @@ class dibi
 		FIELD_TIME = dibi::TIME;
 
 	/** version */
-	const VERSION = '2.1.0',
+	const VERSION = '2.1.1',
 		REVISION = '$WCREV$ released on $WCDATE$';
 
 	/** sorting order */
@@ -114,7 +110,6 @@ class dibi
 	public static $defaultDriver = 'mysql';
 
 
-
 	/**
 	 * Static class - cannot be instantiated.
 	 */
@@ -124,9 +119,7 @@ class dibi
 	}
 
 
-
 	/********************* connections handling ****************d*g**/
-
 
 
 	/**
@@ -142,7 +135,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Disconnects from database (doesn't destroy DibiConnection object).
 	 * @return void
@@ -153,7 +145,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Returns TRUE when connection was established.
 	 * @return bool
@@ -162,7 +153,6 @@ class dibi
 	{
 		return (self::$connection !== NULL) && self::$connection->isConnected();
 	}
-
 
 
 	/**
@@ -189,7 +179,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Sets connection.
 	 * @param  DibiConnection
@@ -199,7 +188,6 @@ class dibi
 	{
 		return self::$connection = $connection;
 	}
-
 
 
 	/**
@@ -214,9 +202,7 @@ class dibi
 	}
 
 
-
 	/********************* monostate for active connection ****************d*g**/
-
 
 
 	/**
@@ -232,7 +218,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Executes the SQL query - Monostate for DibiConnection::nativeQuery().
 	 * @param  string           SQL statement.
@@ -242,7 +227,6 @@ class dibi
 	{
 		return self::getConnection()->nativeQuery($sql);
 	}
-
 
 
 	/**
@@ -257,7 +241,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Generates and returns SQL query as DibiDataSource - Monostate for DibiConnection::test().
 	 * @param  array|mixed      one or more arguments
@@ -268,7 +251,6 @@ class dibi
 		$args = func_get_args();
 		return self::getConnection()->dataSource($args);
 	}
-
 
 
 	/**
@@ -284,7 +266,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Executes SQL query and fetch results - Monostate for DibiConnection::query() & fetchAll().
 	 * @param  array|mixed    one or more arguments
@@ -296,7 +277,6 @@ class dibi
 		$args = func_get_args();
 		return self::getConnection()->query($args)->fetchAll();
 	}
-
 
 
 	/**
@@ -312,7 +292,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Executes SQL query and fetch pairs - Monostate for DibiConnection::query() & fetchPairs().
 	 * @param  array|mixed    one or more arguments
@@ -324,7 +303,6 @@ class dibi
 		$args = func_get_args();
 		return self::getConnection()->query($args)->fetchPairs();
 	}
-
 
 
 	/**
@@ -339,7 +317,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Gets the number of affected rows. Alias for getAffectedRows().
 	 * @return int  number of rows
@@ -349,7 +326,6 @@ class dibi
 	{
 		return self::getConnection()->getAffectedRows();
 	}
-
 
 
 	/**
@@ -365,7 +341,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Retrieves the ID generated for an AUTO_INCREMENT column. Alias for getInsertId().
 	 * @param  string     optional sequence name
@@ -376,7 +351,6 @@ class dibi
 	{
 		return self::getConnection()->getInsertId($sequence);
 	}
-
 
 
 	/**
@@ -391,7 +365,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Commits statements in a transaction - Monostate for DibiConnection::commit($savepoint = NULL).
 	 * @param  string  optional savepoint name
@@ -402,7 +375,6 @@ class dibi
 	{
 		self::getConnection()->commit($savepoint);
 	}
-
 
 
 	/**
@@ -417,7 +389,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * Gets a information about the current database - Monostate for DibiConnection::getDatabaseInfo().
 	 * @return DibiDatabaseInfo
@@ -426,7 +397,6 @@ class dibi
 	{
 		return self::getConnection()->getDatabaseInfo();
 	}
-
 
 
 	/**
@@ -440,22 +410,19 @@ class dibi
 	}
 
 
-
 	/**
 	 * Replacement for majority of dibi::methods() in future.
 	 */
 	public static function __callStatic($name, $args)
 	{
 		//if ($name = 'select', 'update', ...') {
-		//	return self::command()->$name($args);
+		// return self::command()->$name($args);
 		//}
 		return call_user_func_array(array(self::getConnection(), $name), $args);
 	}
 
 
-
 	/********************* fluent SQL builders ****************d*g**/
-
 
 
 	/**
@@ -465,7 +432,6 @@ class dibi
 	{
 		return self::getConnection()->command();
 	}
-
 
 
 	/**
@@ -479,7 +445,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * @param  string   table
 	 * @param  array
@@ -489,7 +454,6 @@ class dibi
 	{
 		return self::getConnection()->update($table, $args);
 	}
-
 
 
 	/**
@@ -503,7 +467,6 @@ class dibi
 	}
 
 
-
 	/**
 	 * @param  string   table
 	 * @return DibiFluent
@@ -514,20 +477,17 @@ class dibi
 	}
 
 
-
 	/********************* data types ****************d*g**/
 
 
-
 	/**
-	 * @return DibiDateTime
+	 * @deprecated
 	 */
 	public static function datetime($time = NULL)
 	{
-		trigger_error(__METHOD__ . '() is deprecated; create DibiDateTime object instead.', E_USER_WARNING);
+		trigger_error(__METHOD__ . '() is deprecated; create DateTime object instead.', E_USER_WARNING);
 		return new DibiDateTime($time);
 	}
-
 
 
 	/**
@@ -535,14 +495,12 @@ class dibi
 	 */
 	public static function date($date = NULL)
 	{
-		trigger_error(__METHOD__ . '() is deprecated; create DibiDateTime object instead.', E_USER_WARNING);
+		trigger_error(__METHOD__ . '() is deprecated; create DateTime object instead.', E_USER_WARNING);
 		return new DibiDateTime($date);
 	}
 
 
-
 	/********************* substitutions ****************d*g**/
-
 
 
 	/**
@@ -555,14 +513,12 @@ class dibi
 	}
 
 
-
 	/** @deprecated */
 	public static function addSubst($expr, $subst)
 	{
 		trigger_error(__METHOD__ . '() is deprecated; use dibi::getSubstitutes()->expr = val; instead.', E_USER_WARNING);
 		self::getSubstitutes()->$expr = $subst;
 	}
-
 
 
 	/** @deprecated */
@@ -580,7 +536,6 @@ class dibi
 	}
 
 
-
 	/** @deprecated */
 	public static function setSubstFallback($callback)
 	{
@@ -589,9 +544,7 @@ class dibi
 	}
 
 
-
 	/********************* misc tools ****************d*g**/
-
 
 
 	/**
@@ -607,7 +560,9 @@ class dibi
 			$sql->dump();
 
 		} else {
-			if ($sql === NULL) $sql = self::$sql;
+			if ($sql === NULL) {
+				$sql = self::$sql;
+			}
 
 			static $keywords1 = 'SELECT|(?:ON\s+DUPLICATE\s+KEY)?UPDATE|INSERT(?:\s+INTO)?|REPLACE(?:\s+INTO)?|DELETE|CALL|UNION|FROM|WHERE|HAVING|GROUP\s+BY|ORDER\s+BY|LIMIT|OFFSET|SET|VALUES|LEFT\s+JOIN|INNER\s+JOIN|TRUNCATE|RETURNING';
 			static $keywords2 = 'ALL|DISTINCT|DISTINCTROW|IGNORE|AS|USING|ON|AND|OR|IN|IS|NOT|NULL|LIKE|RLIKE|REGEXP|TRUE|FALSE';
@@ -645,7 +600,6 @@ class dibi
 	}
 
 
-
 	private static function highlightCallback($matches)
 	{
 		if (!empty($matches[1])) { // comment
@@ -661,7 +615,6 @@ class dibi
 			return '<strong style="color:green">' . $matches[4] . '</strong>';
 		}
 	}
-
 
 
 	private static function cliHighlightCallback($matches)
