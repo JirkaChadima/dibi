@@ -154,12 +154,14 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 	 */
 	public function query($sql)
 	{
+		$this->installErrorHandler();
 		$res = oci_parse($this->connection, $sql);
 		if ($this->binds) {
 			foreach($this->binds as $key => $obj) {
 				if (in_array($obj['datatype'], array(SQLT_RDD, OCI_B_ROWID, SQLT_CLOB, OCI_B_CLOB, SQLT_BLOB, OCI_B_BLOB, SQLT_BFILEE, OCI_B_BFILE))) {
 					$this->binds[$key]['descriptor'] = oci_new_descriptor($this->connection, OCI_D_LOB);
 					if (!$this->binds[$key]['descriptor']) {
+						$this->restoreErrorHandler();
 						throw new DibiDriverException("Cannot create oracle descriptor.");
 					}
 					oci_bind_by_name($res, $key, $this->binds[$key]['descriptor'], -1, $obj['datatype']);
@@ -200,12 +202,15 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 			}
 
 			if ($err) {
+				$this->restoreErrorHandler();
 				throw new DibiDriverException($err['message'], $err['code'], $sql);
 
 			} elseif (is_resource($res)) {
+				$this->restoreErrorHandler();
 				return $this->createResultDriver($res);
 			}
 		} else {
+			$this->restoreErrorHandler();
 			$err = oci_error($this->connection);
 			throw new DibiDriverException($err['message'], $err['code'], $sql);
 		}
@@ -586,6 +591,19 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 			return $this->binds[$key]['data'];
 		}
 		return null;
+	}
+	
+	public function installErrorHandler() {
+		set_error_handler(function ($number, $string, $file, $line, $context) {
+			if (preg_match('#^(ORA-|oci\_execute)#', $string)) {
+				throw new DibiDriverException($string, $number);
+			}
+			return false;
+		}, E_WARNING);
+	}
+	
+	public function restoreErrorHandler() {
+		restore_error_handler();
 	}
 
 }
