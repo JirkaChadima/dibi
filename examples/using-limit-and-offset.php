@@ -4,13 +4,12 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 
 dibi::connect(array(
-	'driver'   => 'sqlite',
-	'database' => 'data/sample.sdb',
+	'driver'   => 'sqlite3',
+	'database' => 'data/sample.s3db',
 ));
 
 
@@ -19,11 +18,9 @@ dibi::test('SELECT * FROM [products]');
 // -> SELECT * FROM [products]
 
 
-
 // with limit = 2
 dibi::test('SELECT * FROM [products] %lmt', 2);
 // -> SELECT * FROM [products] LIMIT 2
-
 
 
 // with limit = 2, offset = 1

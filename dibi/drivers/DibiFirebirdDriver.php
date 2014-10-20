@@ -2,11 +2,7 @@
 
 /**
  * This file is part of the "dibi" - smart database abstraction layer.
- *
  * Copyright (c) 2005 David Grudl (http://davidgrudl.com)
- *
- * For the full copyright and license information, please view
- * the file license.txt that was distributed with this source code.
  */
 
 
@@ -56,13 +52,12 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Connects to a database.
 	 * @return void
 	 * @throws DibiException
 	 */
-	public function connect(array &$config)
+	public function connect(array & $config)
 	{
 		DibiConnection::alias($config, 'database', 'db');
 
@@ -71,11 +66,13 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 
 		} else {
 			// default values
-			if (!isset($config['username'])) $config['username'] = ini_get('ibase.default_password');
-			if (!isset($config['password'])) $config['password'] = ini_get('ibase.default_user');
-			if (!isset($config['database'])) $config['database'] = ini_get('ibase.default_db');
-			if (!isset($config['charset'])) $config['charset'] = ini_get('ibase.default_charset');
-			if (!isset($config['buffers'])) $config['buffers'] = 0;
+			$config += array(
+				'username' => ini_get('ibase.default_password'),
+				'password' => ini_get('ibase.default_user'),
+				'database' => ini_get('ibase.default_db'),
+				'charset' => ini_get('ibase.default_charset'),
+				'buffers' => 0,
+			);
 
 			DibiDriverException::tryError();
 			if (empty($config['persistent'])) {
@@ -95,7 +92,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Disconnects from a database.
 	 * @return void
@@ -104,7 +100,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		ibase_close($this->connection);
 	}
-
 
 
 	/**
@@ -138,7 +133,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Gets the number of affected rows by the last INSERT, UPDATE or DELETE query.
 	 * @return int|FALSE  number of rows or FALSE on error
@@ -147,7 +141,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		return ibase_affected_rows($this->connection);
 	}
-
 
 
 	/**
@@ -159,7 +152,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		return ibase_gen_id($sequence, 0, $this->connection);
 	}
-
 
 
 	/**
@@ -176,7 +168,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		$this->transaction = ibase_trans($this->resource);
 		$this->inTransaction = TRUE;
 	}
-
 
 
 	/**
@@ -199,7 +190,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
@@ -220,7 +210,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Is in transaction?
 	 * @return bool
@@ -229,7 +218,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		return $this->inTransaction;
 	}
-
 
 
 	/**
@@ -242,7 +230,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns the connection reflector.
 	 * @return IDibiReflector
@@ -251,7 +238,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		return $this;
 	}
-
 
 
 	/**
@@ -267,9 +253,7 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/********************* SQL ********************/
-
 
 
 	/**
@@ -282,27 +266,27 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
-		case dibi::BINARY:
-			return "'" . str_replace("'", "''", $value) . "'";
+			case dibi::TEXT:
+			case dibi::BINARY:
+				return "'" . str_replace("'", "''", $value) . "'";
 
-		case dibi::IDENTIFIER:
-			return $value;
+			case dibi::IDENTIFIER:
+				return $value;
 
-		case dibi::BOOL:
-			return $value ? 1 : 0;
+			case dibi::BOOL:
+				return $value ? 1 : 0;
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
+			case dibi::DATE:
+			case dibi::DATETIME:
+				if (!$value instanceof DateTime && !$value instanceof DateTimeInterface) {
+					$value = new DibiDateTime($value);
+				}
+				return $value->format($type === dibi::DATETIME ? "'Y-m-d H:i:s'" : "'Y-m-d'");
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
-
-		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			default:
+				throw new InvalidArgumentException('Unsupported type.');
 		}
 	}
-
 
 
 	/**
@@ -315,7 +299,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		throw new DibiNotImplementedException;
 	}
-
 
 
 	/**
@@ -334,26 +317,20 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Injects LIMIT/OFFSET to the SQL query.
-	 * @param  string &$sql  The SQL query that will be modified.
-	 * @param  int $limit
-	 * @param  int $offset
 	 * @return void
 	 */
-	public function applyLimit(&$sql, $limit, $offset)
+	public function applyLimit(& $sql, $limit, $offset)
 	{
-		if ($limit < 0 && $offset < 1) return;
-
-		// see http://scott.yang.id.au/2004/01/limit-in-select-statements-in-firebird/
-		$sql = 'SELECT FIRST ' . (int) $limit . ($offset > 0 ? ' SKIP ' . (int) $offset : '') . ' * FROM (' . $sql . ')';
+		if ($limit >= 0 && $offset > 0) {
+			// see http://scott.yang.id.au/2004/01/limit-in-select-statements-in-firebird/
+			$sql = 'SELECT FIRST ' . (int) $limit . ($offset > 0 ? ' SKIP ' . (int) $offset : '') . ' * FROM (' . $sql . ')';
+		}
 	}
 
 
-
 	/********************* result set ********************/
-
 
 
 	/**
@@ -366,7 +343,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns the number of rows in a result set.
 	 * @return int
@@ -375,7 +351,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		throw new DibiNotSupportedException("Firebird/Interbase do not support returning number of rows in result set.");
 	}
-
 
 
 	/**
@@ -402,7 +377,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Moves cursor position without fetching row.
 	 * @param  int      the 0-based cursor pos to seek to
@@ -413,7 +387,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		throw new DibiNotSupportedException("Firebird/Interbase do not support seek in result set.");
 	}
-
 
 
 	/**
@@ -427,7 +400,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns the result set resource.
 	 * @return mysqli_result
@@ -437,7 +409,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		$this->autoFree = FALSE;
 		return is_resource($this->resultSet) ? $this->resultSet : NULL;
 	}
-
 
 
 	/**
@@ -461,9 +432,7 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/********************* IDibiReflector ********************/
-
 
 
 	/**
@@ -487,7 +456,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		}
 		return $tables;
 	}
-
 
 
 	/**
@@ -545,7 +513,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns metadata for all indexes in a table (the constraints are included).
 	 * @param  string
@@ -580,7 +547,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns metadata for all foreign keys in a table.
 	 * @param  string
@@ -611,7 +577,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns list of indices in given table (the constraints are not listed).
 	 * @param  string
@@ -632,7 +597,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		}
 		return $indices;
 	}
-
 
 
 	/**
@@ -657,7 +621,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		}
 		return $constraints;
 	}
-
 
 
 	/**
@@ -709,7 +672,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns list of triggers for given table.
 	 * (Only if user has permissions on ALTER TABLE, INSERT/UPDATE/DELETE record in table)
@@ -730,7 +692,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		}
 		return $triggers;
 	}
-
 
 
 	/**
@@ -786,7 +747,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns list of stored procedures.
 	 * @return array
@@ -803,7 +763,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		}
 		return $procedures;
 	}
-
 
 
 	/**
@@ -825,7 +784,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 
-
 	/**
 	 * Returns list of user defined functions (UDF).
 	 * @return array
@@ -845,8 +803,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	}
 
 }
-
-
 
 
 /**
@@ -873,7 +829,6 @@ class DibiProcedureException extends DibiException
 		parent::__construct($message, (int) $code, $sql);
 		$this->severity = $severity;
 	}
-
 
 
 	/**

@@ -4,16 +4,13 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 
 dibi::connect(array(
-	'driver'   => 'sqlite',
-	'database' => 'data/sample.sdb',
+	'driver'   => 'sqlite3',
+	'database' => 'data/sample.s3db',
 ));
-
-
 
 
 // create new substitution :blog:  ==>  wp_
@@ -23,17 +20,11 @@ dibi::test("SELECT * FROM [:blog:items]");
 // -> SELECT * FROM [wp_items]
 
 
-
-
-
 // create new substitution :: (empty)  ==>  my_
 dibi::getSubstitutes()->{''} = 'my_';
 
 dibi::test("UPDATE ::table SET [text]='Hello World'");
 // -> UPDATE my_table SET [text]='Hello World'
-
-
-
 
 
 // create substitutions using fallback callback

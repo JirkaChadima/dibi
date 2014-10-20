@@ -1,4 +1,4 @@
-<?php ob_start(1) // needed by FirePHP ?>
+<?php ob_start() // needed by FirePHP ?>
 
 <!DOCTYPE html><link rel="stylesheet" href="data/style.css">
 
@@ -6,13 +6,12 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 
 dibi::connect(array(
-	'driver'   => 'sqlite',
-	'database' => 'data/sample.sdb',
+	'driver'   => 'sqlite3',
+	'database' => 'data/sample.s3db',
 	'profiler' => array(
 		'run' => TRUE,
 	)

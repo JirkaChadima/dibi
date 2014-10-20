@@ -4,22 +4,20 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 date_default_timezone_set('Europe/Prague');
 
 
 dibi::connect(array(
-	'driver'   => 'sqlite',
-	'database' => 'data/sample.sdb',
+	'driver'   => 'sqlite3',
+	'database' => 'data/sample.s3db',
 	// enable query logging to this file
 	'profiler' => array(
 		'run' => TRUE,
 		'file' => 'data/log.sql',
 	),
 ));
-
 
 
 try {

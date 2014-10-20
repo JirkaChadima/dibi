@@ -4,15 +4,13 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 
 dibi::connect(array(
-	'driver'   => 'sqlite',
-	'database' => 'data/sample.sdb',
+	'driver'   => 'sqlite3',
+	'database' => 'data/sample.s3db',
 ));
-
 
 
 // retrieve database reflection
@@ -26,7 +24,6 @@ foreach ($database->getTables() as $table) {
 echo "</ul>\n";
 
 
-
 // table reflection
 $table = $database->getTable('products');
 
@@ -38,7 +35,6 @@ foreach ($table->getColumns() as $column) {
 	echo "<li>{$column->name} <i>{$column->nativeType}</i> <code>{$column->default}</code></li>\n";
 }
 echo "</ul>\n";
-
 
 
 echo "Indexes";

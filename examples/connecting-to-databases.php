@@ -4,16 +4,15 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 
 // connects to SQlite using dibi class
 echo '<p>Connecting to Sqlite: ';
 try {
 	dibi::connect(array(
-		'driver'   => 'sqlite',
-		'database' => 'data/sample.sdb',
+		'driver'   => 'sqlite3',
+		'database' => 'data/sample.s3db',
 	));
 	echo 'OK';
 
@@ -21,16 +20,14 @@ try {
 	echo get_class($e), ': ', $e->getMessage(), "\n";
 }
 echo "</p>\n";
-
-
 
 
 // connects to SQlite using DibiConnection object
 echo '<p>Connecting to Sqlite: ';
 try {
 	$connection = new DibiConnection(array(
-		'driver'   => 'sqlite',
-		'database' => 'data/sample.sdb',
+		'driver'   => 'sqlite3',
+		'database' => 'data/sample.s3db',
 	));
 	echo 'OK';
 
@@ -38,8 +35,6 @@ try {
 	echo get_class($e), ': ', $e->getMessage(), "\n";
 }
 echo "</p>\n";
-
-
 
 
 // connects to MySQL using DSN
@@ -52,8 +47,6 @@ try {
 	echo get_class($e), ': ', $e->getMessage(), "\n";
 }
 echo "</p>\n";
-
-
 
 
 // connects to MySQLi using array
@@ -78,8 +71,6 @@ try {
 echo "</p>\n";
 
 
-
-
 // connects to ODBC
 echo '<p>Connecting to ODBC: ';
 try {
@@ -87,7 +78,7 @@ try {
 		'driver'   => 'odbc',
 		'username' => 'root',
 		'password' => '***',
-		'dsn'      => 'Driver={Microsoft Access Driver (*.mdb)};Dbq='.dirname(__FILE__).'/data/sample.mdb',
+		'dsn'      => 'Driver={Microsoft Access Driver (*.mdb)};Dbq='.__DIR__.'/data/sample.mdb',
 	));
 	echo 'OK';
 
@@ -95,8 +86,6 @@ try {
 	echo get_class($e), ': ', $e->getMessage(), "\n";
 }
 echo "</p>\n";
-
-
 
 
 // connects to PostgreSql
@@ -115,8 +104,6 @@ try {
 echo "</p>\n";
 
 
-
-
 // connects to PDO
 echo '<p>Connecting to Sqlite via PDO: ';
 try {
@@ -130,7 +117,6 @@ try {
 	echo get_class($e), ': ', $e->getMessage(), "\n";
 }
 echo "</p>\n";
-
 
 
 // connects to MS SQL
@@ -150,7 +136,6 @@ try {
 echo "</p>\n";
 
 
-
 // connects to MS SQL 2005
 echo '<p>Connecting to MS SQL 2005: ';
 try {
@@ -167,7 +152,6 @@ try {
 	echo get_class($e), ': ', $e->getMessage(), "\n";
 }
 echo "</p>\n";
-
 
 
 // connects to Oracle

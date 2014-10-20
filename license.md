@@ -13,11 +13,10 @@ use Dibi in commercial projects as long as the copyright header
 remains intact.
 
 
-
 New BSD License
 ---------------
 
-Copyright (c) 2004, 2013 David Grudl (http://davidgrudl.com)
+Copyright (c) 2004, 2014 David Grudl (http://davidgrudl.com)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -44,7 +43,6 @@ loss of use, data, or profits; or business interruption) however caused and on
 any theory of liability, whether in contract, strict liability, or tort
 (including negligence or otherwise) arising in any way out of the use of this
 software, even if advised of the possibility of such damage.
-
 
 
 GNU General Public License

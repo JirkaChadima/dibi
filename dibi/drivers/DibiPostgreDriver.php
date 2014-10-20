@@ -2,11 +2,7 @@
 
 /**
  * This file is part of the "dibi" - smart database abstraction layer.
- *
  * Copyright (c) 2005 David Grudl (http://davidgrudl.com)
- *
- * For the full copyright and license information, please view
- * the file license.txt that was distributed with this source code.
  */
 
 
@@ -39,10 +35,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	/** @var int|FALSE  Affected rows */
 	private $affectedRows = FALSE;
 
-	/** @var bool  Escape method */
-	private $escMethod = FALSE;
-
-
 
 	/**
 	 * @throws DibiNotSupportedException
@@ -55,19 +47,20 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Connects to a database.
 	 * @return void
 	 * @throws DibiException
 	 */
-	public function connect(array &$config)
+	public function connect(array & $config)
 	{
 		if (isset($config['resource'])) {
 			$this->connection = $config['resource'];
 
 		} else {
-			if (!isset($config['charset'])) $config['charset'] = 'utf8';
+			$config += array(
+				'charset' => 'utf8',
+			);
 			if (isset($config['string'])) {
 				$string = $config['string'];
 			} else {
@@ -75,7 +68,9 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 				DibiConnection::alias($config, 'user', 'username');
 				DibiConnection::alias($config, 'dbname', 'database');
 				foreach (array('host','hostaddr','port','dbname','user','password','connect_timeout','options','sslmode','service') as $key) {
-					if (isset($config[$key])) $string .= $key . '=' . $config[$key] . ' ';
+					if (isset($config[$key])) {
+						$string .= $key . '=' . $config[$key] . ' ';
+					}
 				}
 			}
 
@@ -105,10 +100,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 		if (isset($config['schema'])) {
 			$this->query('SET search_path TO "' . $config['schema'] . '"');
 		}
-
-		$this->escMethod = version_compare(PHP_VERSION , '5.2.0', '>=');
 	}
-
 
 
 	/**
@@ -119,7 +111,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		pg_close($this->connection);
 	}
-
 
 
 	/**
@@ -145,7 +136,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Gets the number of affected rows by the last INSERT, UPDATE or DELETE query.
 	 * @return int|FALSE  number of rows or FALSE on error
@@ -154,7 +144,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		return $this->affectedRows;
 	}
-
 
 
 	/**
@@ -170,12 +159,13 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 			$res = $this->query("SELECT CURRVAL('$sequence')");
 		}
 
-		if (!$res) return FALSE;
+		if (!$res) {
+			return FALSE;
+		}
 
 		$row = $res->fetch(FALSE);
 		return is_array($row) ? $row[0] : FALSE;
 	}
-
 
 
 	/**
@@ -190,7 +180,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
@@ -201,7 +190,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		$this->query($savepoint ? "RELEASE SAVEPOINT $savepoint" : 'COMMIT');
 	}
-
 
 
 	/**
@@ -216,7 +204,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Is in transaction?
 	 * @return bool
@@ -225,7 +212,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		return !in_array(pg_transaction_status($this->connection), array(PGSQL_TRANSACTION_UNKNOWN, PGSQL_TRANSACTION_IDLE), TRUE);
 	}
-
 
 
 	/**
@@ -238,7 +224,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Returns the connection reflector.
 	 * @return IDibiReflector
@@ -247,7 +232,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		return $this;
 	}
-
 
 
 	/**
@@ -263,9 +247,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/********************* SQL ****************d*g**/
-
 
 
 	/**
@@ -278,44 +260,36 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
-			if ($this->escMethod) {
+			case dibi::TEXT:
 				if (!is_resource($this->connection)) {
 					throw new DibiException('Lost connection to server.');
 				}
 				return "'" . pg_escape_string($this->connection, $value) . "'";
-			} else {
-				return "'" . pg_escape_string($value) . "'";
-			}
 
-		case dibi::BINARY:
-			if ($this->escMethod) {
+			case dibi::BINARY:
 				if (!is_resource($this->connection)) {
 					throw new DibiException('Lost connection to server.');
 				}
 				return "'" . pg_escape_bytea($this->connection, $value) . "'";
-			} else {
-				return "'" . pg_escape_bytea($value) . "'";
-			}
 
-		case dibi::IDENTIFIER:
-			// @see http://www.postgresql.org/docs/8.2/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-			return '"' . str_replace('"', '""', $value) . '"';
+			case dibi::IDENTIFIER:
+				// @see http://www.postgresql.org/docs/8.2/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+				return '"' . str_replace('"', '""', $value) . '"';
 
-		case dibi::BOOL:
-			return $value ? 'TRUE' : 'FALSE';
+			case dibi::BOOL:
+				return $value ? 'TRUE' : 'FALSE';
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
+			case dibi::DATE:
+			case dibi::DATETIME:
+				if (!$value instanceof DateTime && !$value instanceof DateTimeInterface) {
+					$value = new DibiDateTime($value);
+				}
+				return $value->format($type === dibi::DATETIME ? "'Y-m-d H:i:s'" : "'Y-m-d'");
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
-
-		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			default:
+				throw new InvalidArgumentException('Unsupported type.');
 		}
 	}
-
 
 
 	/**
@@ -326,16 +300,10 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	 */
 	public function escapeLike($value, $pos)
 	{
-		if ($this->escMethod) {
-			$value = pg_escape_string($this->connection, $value);
-		} else {
-			$value = pg_escape_string($value);
-	}
-
+		$value = pg_escape_string($this->connection, $value);
 		$value = strtr($value, array( '%' => '\\\\%', '_' => '\\\\_'));
 		return ($pos <= 0 ? "'%" : "'") . $value . ($pos >= 0 ? "%'" : "'");
 	}
-
 
 
 	/**
@@ -354,27 +322,23 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Injects LIMIT/OFFSET to the SQL query.
-	 * @param  string &$sql  The SQL query that will be modified.
-	 * @param  int $limit
-	 * @param  int $offset
 	 * @return void
 	 */
-	public function applyLimit(&$sql, $limit, $offset)
+	public function applyLimit(& $sql, $limit, $offset)
 	{
-		if ($limit >= 0)
+		if ($limit >= 0) {
 			$sql .= ' LIMIT ' . (int) $limit;
+		}
 
-		if ($offset > 0)
+		if ($offset > 0) {
 			$sql .= ' OFFSET ' . (int) $offset;
+		}
 	}
 
 
-
 	/********************* result set ****************d*g**/
-
 
 
 	/**
@@ -387,7 +351,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Returns the number of rows in a result set.
 	 * @return int
@@ -396,7 +359,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		return pg_num_rows($this->resultSet);
 	}
-
 
 
 	/**
@@ -410,7 +372,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Moves cursor position without fetching row.
 	 * @param  int      the 0-based cursor pos to seek to
@@ -420,7 +381,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	{
 		return pg_result_seek($this->resultSet, $row);
 	}
-
 
 
 	/**
@@ -434,20 +394,18 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/**
 	 * Returns metadata for all columns in a result set.
 	 * @return array
 	 */
 	public function getResultColumns()
 	{
-		$hasTable = version_compare(PHP_VERSION , '5.2.0', '>=');
 		$count = pg_num_fields($this->resultSet);
 		$columns = array();
 		for ($i = 0; $i < $count; $i++) {
 			$row = array(
 				'name'      => pg_field_name($this->resultSet, $i),
-				'table'     => $hasTable ? pg_field_table($this->resultSet, $i) : NULL,
+				'table'     => pg_field_table($this->resultSet, $i),
 				'nativetype'=> pg_field_type($this->resultSet, $i),
 			);
 			$row['fullname'] = $row['table'] ? $row['table'] . '.' . $row['name'] : $row['name'];
@@ -455,7 +413,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 		}
 		return $columns;
 	}
-
 
 
 	/**
@@ -469,9 +426,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 	}
 
 
-
 	/********************* IDibiReflector ****************d*g**/
-
 
 
 	/**
@@ -485,7 +440,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 			throw new DibiDriverException('Reflection requires PostgreSQL 7.4 and newer.');
 		}
 
-		$res = $this->query("
+		$query = "
 			SELECT
 				table_name AS name,
 				CASE table_type
@@ -495,12 +450,23 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 			FROM
 				information_schema.tables
 			WHERE
-				table_schema = current_schema()
-		");
+				table_schema = current_schema()";
+
+		if ($version >= 9.3) {
+			$query .= "
+				UNION ALL
+				SELECT
+					matviewname, 1
+				FROM
+					pg_matviews
+				WHERE
+					schemaname = current_schema()";
+		}
+
+		$res = $this->query($query);
 		$tables = pg_fetch_all($res->resultSet);
 		return $tables ? $tables : array();
 	}
-
 
 
 	/**
@@ -525,6 +491,31 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 			WHERE table_name = $_table AND table_schema = current_schema()
 			ORDER BY ordinal_position
 		");
+
+		if (!$res->getRowCount()) {
+			$res = $this->query("
+				SELECT
+					a.attname AS column_name,
+					pg_type.typname AS udt_name,
+					a.attlen AS numeric_precision,
+					a.atttypmod-4 AS character_maximum_length,
+					NOT a.attnotnull AS is_nullable,
+					a.attnum AS ordinal_position,
+					adef.adsrc AS column_default
+				FROM
+					pg_attribute a
+					JOIN pg_type ON a.atttypid = pg_type.oid
+					JOIN pg_class cls ON a.attrelid = cls.oid
+					LEFT JOIN pg_attrdef adef ON adef.adnum = a.attnum AND adef.adrelid = a.attrelid
+				WHERE
+					cls.relkind IN ('r', 'v', 'mv')
+					AND a.attrelid = $_table::regclass
+					AND a.attnum > 0
+					AND NOT a.attisdropped
+				ORDER BY ordinal_position
+			");
+		}
+
 		$columns = array();
 		while ($row = $res->fetch(TRUE)) {
 			$size = (int) max($row['character_maximum_length'], $row['numeric_precision']);
@@ -532,8 +523,8 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 				'name' => $row['column_name'],
 				'table' => $table,
 				'nativetype' => strtoupper($row['udt_name']),
-				'size' => $size ? $size : NULL,
-				'nullable' => $row['is_nullable'] === 'YES',
+				'size' => $size > 0 ? $size : NULL,
+				'nullable' => $row['is_nullable'] === 'YES' || $row['is_nullable'] === 't',
 				'default' => $row['column_default'],
 				'autoincrement' => (int) $row['ordinal_position'] === $primary && substr($row['column_default'], 0, 7) === 'nextval',
 				'vendor' => $row,
@@ -541,7 +532,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 		}
 		return $columns;
 	}
-
 
 
 	/**
@@ -583,7 +573,6 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver, IDibiResultDr
 		}
 		return array_values($indexes);
 	}
-
 
 
 	/**

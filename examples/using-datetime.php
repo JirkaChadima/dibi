@@ -4,21 +4,18 @@
 
 <?php
 
-require dirname(__FILE__) . '/Nette/Debugger.php';
-require dirname(__FILE__) . '/../dibi/dibi.php';
+require __DIR__ . '/../dibi/dibi.php';
 
 date_default_timezone_set('Europe/Prague');
 
 
-
 // CHANGE TO REAL PARAMETERS!
 dibi::connect(array(
-	'driver'   => 'sqlite',
-	'database' => 'data/sample.sdb',
+	'driver'   => 'sqlite3',
+	'database' => 'data/sample.s3db',
 	'formatDate' => "'Y-m-d'",
 	'formatDateTime' => "'Y-m-d H-i-s'",
 ));
-
 
 
 // generate and dump SQL

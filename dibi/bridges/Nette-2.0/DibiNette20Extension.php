@@ -10,15 +10,14 @@
  */
 
 
-
 /**
- * Dibi extension for Nette Framework 2.1. Creates 'connection' service.
+ * Dibi extension for Nette Framework 2.0. Creates 'connection' service.
  *
  * @author     David Grudl
  * @package    dibi\nette
  * @phpversion 5.3
  */
-class DibiNette21Extension extends Nette\DI\CompilerExtension
+class DibiNette20Extension extends Nette\Config\CompilerExtension
 {
 
 	public function loadConfiguration()
@@ -46,8 +45,8 @@ class DibiNette21Extension extends Nette\DI\CompilerExtension
 		if ($useProfiler) {
 			$panel = $container->addDefinition($this->prefix('panel'))
 				->setClass('DibiNettePanel')
-				->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(?)', array('@self'))
-				->addSetup('Nette\Diagnostics\Debugger::getBlueScreen()->addPanel(?)', array('DibiNettePanel::renderException'));
+				->addSetup('Nette\Diagnostics\Debugger::$bar->addPanel(?)', array('@self'))
+				->addSetup('Nette\Diagnostics\Debugger::$blueScreen->addPanel(?)', array('DibiNettePanel::renderException'));
 
 			$connection->addSetup('$service->onEvent[] = ?', array(array($panel, 'logEvent')));
 		}

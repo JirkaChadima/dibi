@@ -2,11 +2,7 @@
 
 /**
  * This file is part of the "dibi" - smart database abstraction layer.
- *
  * Copyright (c) 2005 David Grudl (http://davidgrudl.com)
- *
- * For the full copyright and license information, please view
- * the file license.txt that was distributed with this source code.
  */
 
 
@@ -23,12 +19,10 @@ class DibiMsSql2005Reflector extends DibiObject implements IDibiReflector
 	private $driver;
 
 
-
 	public function __construct(IDibiDriver $driver)
 	{
 		$this->driver = $driver;
 	}
-
 
 
 	/**
@@ -47,7 +41,6 @@ class DibiMsSql2005Reflector extends DibiObject implements IDibiReflector
 		}
 		return $tables;
 	}
-
 
 
 	/**
@@ -102,7 +95,6 @@ class DibiMsSql2005Reflector extends DibiObject implements IDibiReflector
 	}
 
 
-
 	/**
 	 * Returns metadata for all indexes in a table.
 	 * @param  string
@@ -126,7 +118,6 @@ class DibiMsSql2005Reflector extends DibiObject implements IDibiReflector
 		}
 		return array_values($indexes);
 	}
-
 
 
 	/**
