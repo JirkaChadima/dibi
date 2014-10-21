@@ -20,7 +20,7 @@
  *   - resource (resource) => existing connection resource
  *   - persistent => Creates persistent connections with oci_pconnect instead of oci_new_connect
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
- * 
+ *
  * Bind data support:
  *   - functions
  *     <code>
@@ -30,9 +30,10 @@
  *     </code>
  *   - procedures
  *     <code>
- *     $out = dibi::getDriver()->bindData(0, OCI_B_INT);
+ *     $out = dibi::getDriver()->bindOutData(0, OCI_B_INT);
  *     dibi::query("call myprocedure(%sql, %sql)",  dibi::getDriver()->bindData('asdfasdf', SQLT_CHR), $out);
  *     dibi::getDriver()->getBoundData($out);
+ *     dibi::getDriver()->free(); // free is required only after out parameters are used, if not called subsequent queries will throw errors
  *     </code>
  *   - LOBs
  *     <code>
@@ -152,6 +153,9 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 	{
 		$res = oci_parse($this->connection, $sql);
 		if ($this->binds) {
+			set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) use ($sql) {
+				throw new DibiDriverException($errstr, $errno, $sql);
+			}, E_WARNING);
 			foreach($this->binds as $key => $obj) {
 				if (in_array($obj['datatype'], array(SQLT_RDD, OCI_B_ROWID, SQLT_CLOB, OCI_B_CLOB, SQLT_BLOB, OCI_B_BLOB, SQLT_BFILEE, OCI_B_BFILE))) {
 					$this->binds[$key]['descriptor'] = oci_new_descriptor($this->connection, OCI_D_LOB);
@@ -163,6 +167,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 					oci_bind_by_name($res, $key, $this->binds[$key]['data'], -1, $obj['datatype']);
 				}
 			}
+			restore_error_handler();
 		}
 		if ($res) {
 			if ($this->binds) {
@@ -179,6 +184,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 							$lobsOK = false;
 							$err = oci_error($res);
 							$this->rollback();
+							$this->unbindInData();
 							break;
 						}
 					}
@@ -187,12 +193,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 				if ($lobsOK) {
 					$this->commit();
 				}
-				foreach ($this->binds as $obj) {
-					if (array_key_exists('descriptor', $obj)) {
-						$obj['descriptor']->free();
-					}
-				}
-				$this->binds = array(); // frees bound data and enables other queries flawlessly
+				$this->unbindInData();
 			}
 
 			if ($err) {
@@ -450,6 +451,11 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 		if ($this->resultSet) {
 			oci_free_statement($this->resultSet);
 		}
+		foreach ($this->binds as $obj) {
+			if (array_key_exists('descriptor', $obj)) {
+				$obj['descriptor']->free();
+			}
+		}
 		$this->binds = array();
 		$this->resultSet = NULL;
 	}
@@ -541,23 +547,16 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 		throw new DibiNotImplementedException;
 	}
 
-	/**
-	 * Returns pseudo-unique 10 character identifier
-	 * @return string
-	 */
-	private function generateDataKey()
-	{
-		return ':' . substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 10);
-	}
 
 	/**
 	 * Stores data into internal array and returns metakey that is used
 	 * later in query.
 	 * @param mixed $data
 	 * @param string type
+	 * @param boolean Is out parameter? Out parameters are not deleted immediately after query execution so the can be read.
 	 * @return string
 	 */
-	public function bindData($data, $type)
+	public function bindData($data, $type, $out = false)
 	{
 		if (!in_array($type, self::$bindableTypes)) {
 			throw new DibiDriverException("Unknown Oracle bind datatype.");
@@ -568,8 +567,21 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 		$this->binds[$key] = array(
 				'data' => $data,
 				'datatype' => $type,
+				'out' => $out,
 			);
 		return $key;
+	}
+
+
+	/**
+	 * Alias for bindData($data, $type, true)
+	 *
+	 * @param mixed $data
+	 * @param string $type
+	 * @return string
+	 */
+	public function bindOutData($data, $type) {
+		return $this->bindData($data, $type, true);
 	}
 
 	/**
@@ -583,6 +595,29 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 			return $this->binds[$key]['data'];
 		}
 		return null;
+	}
+
+
+	private function unbindInData() {
+		$todelete = array();
+		foreach ($this->binds as $i => $obj) {
+			if (array_key_exists('descriptor', $obj)) {
+				$obj['descriptor']->free();
+			}
+			if (empty($obj['out'])) {
+				$todelete[$i] = $i;
+			}
+		}
+		$this->binds = array_diff_key($this->binds, $todelete);
+	}
+
+	/**
+	 * Returns pseudo-unique 10 character identifier
+	 * @return string
+	 */
+	private function generateDataKey()
+	{
+		return ':' . substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 10);
 	}
 
 }
